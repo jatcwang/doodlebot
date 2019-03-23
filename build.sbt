@@ -1,7 +1,7 @@
 name         in ThisBuild := "doodlebot"
 version      in ThisBuild := "0.0.1"
 organization in ThisBuild := "underscoreio"
-scalaVersion in ThisBuild := "2.11.8"
+scalaVersion in ThisBuild := "2.12.8"
 
 scalacOptions in ThisBuild ++= Seq("-feature", "-Xfatal-warnings", "-deprecation", "-unchecked", "-Ywarn-unused-import")
 
@@ -17,11 +17,11 @@ lazy val server = project.
     libraryDependencies ++= Seq(
       "com.github.finagle" %% "finch-core" % "0.11.0-M2",
       "com.github.finagle" %% "finch-circe" % "0.11.0-M2",
-      "io.circe" %% "circe-core" % "0.4.1",
-      "io.circe" %% "circe-generic" % "0.4.1",
-      "io.circe" %% "circe-parser" % "0.4.1",
-      "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.12.5" % "test"
+      "io.circe" %% "circe-core" % "0.11.1",
+      "io.circe" %% "circe-generic" % "0.11.1",
+      "io.circe" %% "circe-parser" % "0.11.1",
+      "org.scalatest" %% "scalatest" % "3.0.6" % "test",
+      "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
     ),
 
     resourceGenerators in Compile += Def.task {
@@ -46,7 +46,7 @@ lazy val ui = project.
   enablePlugins(ScalaJSPlugin).
   settings(
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.1",
+      "org.scala-js" %%% "scalajs-dom" % "0.9.6",
       "com.lihaoyi" %%% "scalatags" % "0.5.5",
       "be.doeraene" %%% "scalajs-jquery" % "0.9.0"
     ),
