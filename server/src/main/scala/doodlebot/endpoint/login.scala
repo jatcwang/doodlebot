@@ -2,8 +2,8 @@ package doodlebot
 package endpoint
 
 import io.finch._
-import cats.data.Xor
-import cats.syntax.xor._
+import io.finch.syntax._
+import cats.implicits._
 import doodlebot.action.Store
 import doodlebot.validation.InputError
 
@@ -12,7 +12,7 @@ object Login {
 
   val login: Endpoint[Authenticated] = post("login" :: param("name") :: param("password")) { (name: String, password: String) =>
     val login = model.Login(Name(name), Password(password))
-    val result: Xor[FormErrors,Authenticated] =
+    val result: Either[FormErrors,Authenticated] =
       Store.login(login).fold(
         fa = error => {
           FormErrors(
@@ -22,11 +22,11 @@ object Login {
               case Store.PasswordIncorrect =>
                 InputError("password", "Your password is incorrect")
             }
-          ).left
+          ).asLeft
         },
 
         fb = session => {
-          Authenticated(name, session.get.toString).right
+          Authenticated(name, session.get.toString).asRight
         }
       )
 

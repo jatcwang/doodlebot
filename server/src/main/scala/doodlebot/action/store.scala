@@ -1,12 +1,8 @@
 package doodlebot
 package action
 
-import cats.data.{NonEmptyList,ValidatedNel,Xor}
-import cats.std.list._
-import cats.std.option._
-import cats.syntax.validated._
-import cats.syntax.cartesian._
-import cats.syntax.xor._
+import cats.data.{NonEmptyList,ValidatedNel}
+import cats.implicits._
 
 object Store {
   import doodlebot.model._
@@ -41,7 +37,7 @@ object Store {
   // This will gobble memory without limit, but is ok for our simple use case
   private var messages: mutable.ArrayBuffer[Message] = new mutable.ArrayBuffer(1024)
 
-  def signup(user: User): Xor[NonEmptyList[SignupError],Session] = {
+  def signup(user: User): Either[NonEmptyList[SignupError],Session] = {
     Store.synchronized {
       val emailCheck: ValidatedNel[SignupError,Unit] =
         if(emails(user.email))
@@ -55,23 +51,23 @@ object Store {
         else
           ().validNel
 
-      (emailCheck |@| nameCheck).map { (_,_) =>
+      (emailCheck, nameCheck).mapN { (_,_) =>
         emails += user.email
         names += user.name
         accounts += (user.name -> user)
         makeSession(user.name)
-      }.toXor
+      }.toEither
     }
   }
 
-  def login(login: Login): Xor[LoginError,Session] = {
+  def login(login: Login): Either[LoginError,Session] = {
     Store.synchronized {
       for {
-        user <- Xor.fromOption(accounts.get(login.name), nameDoesNotExist(login.name))
+        user <- Either.fromOption(accounts.get(login.name), nameDoesNotExist(login.name))
         session <- if(user.password == login.password)
-                     makeSession(login.name).right
+                     makeSession(login.name).asRight
                    else
-                     passwordIncorrect.left
+                     passwordIncorrect.asLeft
       } yield session
     }
   }
@@ -103,7 +99,7 @@ object Store {
 
   def authenticated(name: Name, session: Session): Boolean =
     Store.synchronized {
-      (sessionsBySession.get(session) |@| sessionsByName.get(name)).map { (n, s) =>
+      (sessionsBySession.get(session), sessionsByName.get(name)).mapN { (n, s) =>
         n == name && s == session
       }.getOrElse(false)
     }

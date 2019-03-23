@@ -5,6 +5,7 @@ import io.finch._
 import com.twitter.util.Base64StringEncoder
 import doodlebot.action.Store
 import java.util.UUID
+import io.finch.syntax._
 
 object Chat {
   import doodlebot.model._

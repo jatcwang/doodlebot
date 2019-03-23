@@ -1,8 +1,7 @@
 package doodlebot
 
 import cats.data.ValidatedNel
-import cats.std.list._
-import cats.syntax.cartesian._
+import cats.implicits._
 import java.util.UUID
 
 object model {
@@ -44,7 +43,7 @@ object model {
   final case class User(name: Name, email: Email, password: Password)
   object User {
     def validate(name: String, email: String, password: String): ValidatedNel[String,User] = {
-      (Name.validate(name) |@| Email.validate(email) |@| Password.validate(password)).map { User.apply _ }
+      (Name.validate(name), Email.validate(email), Password.validate(password)).mapN { User.apply _ }
     }
   }
 }

@@ -1,12 +1,9 @@
 package doodlebot
 package endpoint
 
+import cats.implicits._
 import io.finch._
-import cats.data.Xor
-import cats.std.list._
-import cats.syntax.cartesian._
-import cats.syntax.semigroup._
-import cats.syntax.xor._
+import io.finch.syntax._
 import doodlebot.action.Store
 import doodlebot.validation.InputError
 
@@ -17,14 +14,14 @@ object Signup {
     post("signup" :: param("name") :: param("email") :: param("password")) { (name: String, email: String, password: String) =>
       import doodlebot.syntax.validation._
 
-      val validatedUser: Xor[FormErrors,User] =
+      val validatedUser: Either[FormErrors,User] =
         (
-          Name.validate(name).forInput("name") |@|
-          Email.validate(email).forInput("email") |@|
+          Name.validate(name).forInput("name"),
+          Email.validate(email).forInput("email"),
           Password.validate(password).forInput("password")
-        ).map { (n, e, p) => User(n, e, p) }.toXor.leftMap(errs => FormErrors(errs))
+        ).mapN { (n, e, p) => User(n, e, p) }.toEither.leftMap(errs => FormErrors(errs))
 
-      val result: Xor[FormErrors,Authenticated] =
+      val result: Either[FormErrors,Authenticated] =
         validatedUser.flatMap { user =>
           Store.signup(user).fold(
             fa = errors => {
@@ -38,10 +35,10 @@ object Signup {
                   }
               }
 
-              FormErrors(errs).left
+              FormErrors(errs).asLeft
             },
             fb = session => {
-              Authenticated(name, session.get.toString).right
+              Authenticated(name, session.get.toString).asRight
             }
           )
         }

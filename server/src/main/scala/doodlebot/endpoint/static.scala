@@ -4,6 +4,7 @@ package endpoint
 import io.finch._
 import com.twitter.io.Reader
 import com.twitter.finagle.http.Response
+import io.finch.syntax._
 
 object Static {
   val resourceLoader = this.getClass()

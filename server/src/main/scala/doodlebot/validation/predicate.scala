@@ -2,9 +2,7 @@ package doodlebot
 package validation
 
 import cats.data.{NonEmptyList,Validated,ValidatedNel}
-import cats.std.list._
-import cats.syntax.validated._
-import cats.syntax.semigroup._
+import cats.implicits._
 
 final case class Predicate[A](messages: NonEmptyList[String], check: A => Boolean) {
   def apply(a: A): ValidatedNel[String,A] =
@@ -18,7 +16,7 @@ final case class Predicate[A](messages: NonEmptyList[String], check: A => Boolea
 }
 object Predicate {
   def lift[A](message: String)(f: A => Boolean): Predicate[A] =
-    Predicate(NonEmptyList(message), f)
+    Predicate(NonEmptyList.one(message), f)
 
   def lengthAtLeast(length: Int): Predicate[String] =
     Predicate.lift(s"Must be at least $length characters."){ string =>
