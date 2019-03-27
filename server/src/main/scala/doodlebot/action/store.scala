@@ -3,9 +3,9 @@ package action
 
 import cats.data.{NonEmptyList,ValidatedNel}
 import cats.implicits._
+import doodlebot.models._
 
 object Store {
-  import doodlebot.model._
   import scala.collection.mutable
 
   sealed abstract class SignupError extends Product with Serializable

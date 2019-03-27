@@ -5,9 +5,11 @@ scalaVersion in ThisBuild := "2.12.8"
 
 scalacOptions in ThisBuild ++= Seq("-feature", "-deprecation", "-unchecked", "-Ywarn-unused-import", "-Ypartial-unification")
 
+val http4sVersion = "0.18.23"
 
 lazy val server = project.
   settings(
+    sharedSettings,
     scalacOptions in (Compile, console) := Seq("-feature", "-Xfatal-warnings", "-deprecation", "-unchecked"),
 
     licenses += ("Apache-2.0", url("http://apache.org/licenses/LICENSE-2.0")),
@@ -15,15 +17,20 @@ lazy val server = project.
     resolvers += Resolver.sonatypeRepo("snapshots"),
 
     libraryDependencies ++= Seq(
-      "com.github.finagle" %% "finch-core" % "0.28.0",
-      "com.github.finagle" %% "finch-circe" % "0.28.0",
       "io.circe" %% "circe-core" % "0.11.1",
       "io.circe" %% "circe-generic" % "0.11.1",
       "io.circe" %% "circe-parser" % "0.11.1",
       "org.scalatest" %% "scalatest" % "3.0.6" % "test",
-      "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
+      "org.scalacheck" %% "scalacheck" % "1.14.0" % "test",
+
+      "org.http4s" %% "http4s-dsl" % http4sVersion,
+      "org.http4s" %% "http4s-blaze-server" % http4sVersion,
+      "org.http4s" %% "http4s-blaze-client" % http4sVersion,
+      "org.http4s" %% "http4s-circe" % http4sVersion
+
     ),
 
+    //TODOO:
     /* resourceGenerators in Compile += Def.task { */
     /*   val code = (fastOptJS in Compile in ui).value.data */
     /*   val sourceMap = code.getParentFile / (code.getName + ".map") */
@@ -55,5 +62,10 @@ lazy val ui = project.
       ProvidedJS / "virtual-dom.js"
     ),
     scalaJSUseMainModuleInitializer := true,
-    skip in packageJSDependencies := false
+    skip in packageJSDependencies := false,
+    sharedSettings
   )
+
+lazy val sharedSettings = Seq(
+  addCompilerPlugin("org.spire-math" % "kind-projector" % "0.9.9" cross CrossVersion.binary)
+)

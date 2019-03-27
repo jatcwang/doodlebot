@@ -1,33 +1,28 @@
 package doodlebot
 
-import com.twitter.finagle.Http
-import io.circe._
-import io.circe.syntax._
-import io.circe.generic.auto._
-import io.finch._
-import io.finch.circe._
+import cats.effect._
+import doodlebot.models.{Email, Name, Password, User}
+import fs2.StreamApp
+import org.http4s.dsl.Http4sDsl
+import org.http4s.server.blaze.BlazeBuilder
 
-object DoodleBot {
-  import doodlebot.endpoint._
-  import doodlebot.model.FormErrors
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  implicit val encodeException: Encoder[Exception] = Encoder.instance {
-    case fe @ FormErrors(_) => fe.asJson
-    case e => Json.obj(
-      "message" -> Json.fromString(s"""Exception was thrown: ${e.getMessage}""")
-    )
-  }
+object DoodleBot extends StreamApp[IO] with Http4sDsl[IO] {
+  override def stream(args: List[String], requestShutdown: IO[Unit]): fs2.Stream[IO, StreamApp.ExitCode] = {
+    import doodlebot.endpoint._
 
-  val service =
-    Static.static :+: Signup.signup :+: Login.login :+: Chat.message :+: Chat.poll
-
-  val server = {
-    import doodlebot.model._
     import doodlebot.action.Store
-    Store.signup(
-      User(Name("tester"), Email("tester@example.com"), Password("password"))
-    )
-    Http.serve(":8080", service.toServiceAs[Application.Json])
+
+    Store.signup(User(Name("tester"), Email("tester@example.com"), Password("password")))
+
+    BlazeBuilder[IO]
+      .bindHttp(8080, "localhost")
+      .mountService(LoginRoute.route)
+      .mountService(SignupRoute.route)
+      .mountService(StaticRoute.route)
+      .serve
   }
+
 
 }

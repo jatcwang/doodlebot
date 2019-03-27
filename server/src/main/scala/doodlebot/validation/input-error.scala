@@ -4,9 +4,14 @@ package validation
 import cats.Monoid
 import cats.data.NonEmptyList
 import cats.implicits._
+import io.circe.ObjectEncoder
+import io.circe.generic.semiauto.deriveEncoder
 
 final case class InputError(messages: Map[String,NonEmptyList[String]])
 object InputError {
+
+  implicit val encoder: ObjectEncoder[InputError] = deriveEncoder[InputError]
+
   val empty: InputError = InputError(Map.empty)
 
   def apply(name: String, messages: NonEmptyList[String]): InputError =

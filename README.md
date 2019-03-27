@@ -1,6 +1,6 @@
 # Doodlebot
 
-An Essential Scala case study using Finch and Scala.js
+An Essential Scala case study using Http4s and Scala.js
 
 To run:
 
