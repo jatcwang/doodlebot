@@ -2,17 +2,17 @@ package doodlebot
 
 import java.util.UUID
 
-import cats.data.ValidatedNel
+import cats.data.{Validated, ValidatedNel}
 import cats.effect.IO
+import cats.implicits._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json, ObjectEncoder}
 import org.http4s.EntityDecoder
 import org.http4s.circe._
+import doodlebot.validation.ValidationHelpers._
 
 object models {
-  import doodlebot.syntax.validation._
-  import doodlebot.validation.Predicate._
   import doodlebot.validation._
 
   final case class Log(offset: Int, messages: List[Message])
@@ -46,9 +46,12 @@ object models {
   // Wrappers
   final case class Name(get: String) extends AnyVal
   object Name {
-    //TODOO: this validation is broken
-    def validate(name: String): ValidatedNel[String, Name] =
-      name.validate(lengthAtLeast(6) and onlyLettersOrDigits).map(n => Name(n))
+    def validate(str: String): ValidatedNel[String, Name] = {
+      (lengthAtLeast(str, 6), onlyLettersOrDigits(str)).mapN {
+        case (_, _) =>
+          Name(str)
+      }
+    }
 
     implicit val encoder: Encoder[Name] = new Encoder[Name] {
       override def apply(a: Name): Json = a.get.asJson
@@ -56,18 +59,23 @@ object models {
 
     implicit val decoder: Decoder[Name] = Decoder.decodeString.emap(str => validate(str).leftMap(_.head).toEither)
   }
+
   final case class Email(get: String) extends AnyVal
 
   object Email {
-    def validate(email: String): ValidatedNel[String, Email] =
-      email.validate(containsAllChars("@.")).map(e => Email(e))
+    def validate(str: String): ValidatedNel[String, Email] =
+      Validated
+        .condNel(str.contains("@"), (), "Email must contain the @ character")
+        .map(_ => Email(str))
 
     implicit val decoder: Decoder[Email] = Decoder.decodeString.emap(str => validate(str).leftMap(_.head).toEither)
   }
   final case class Password(get: String) extends AnyVal
   object Password {
-    def validate(password: String): ValidatedNel[String, Password] =
-      password.validate(lengthAtLeast(8)).map(p => Password(p))
+    def validate(str: String): ValidatedNel[String, Password] = {
+      lengthAtLeast(str, 8)
+        .map(_ => Password(str))
+    }
 
     implicit val decoder: Decoder[Password] = Decoder.decodeString.emap(str => validate(str).leftMap(_.head).toEither)
   }
