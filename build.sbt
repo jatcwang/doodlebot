@@ -52,7 +52,7 @@ lazy val ui = project.
   settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.6",
-      "com.lihaoyi" %%% "scalatags" % "0.6.7",
+      "com.lihaoyi" %%% "scalatags" % "0.6.8",
       "be.doeraene" %%% "scalajs-jquery" % "0.9.4"
     ),
     jsDependencies ++= Seq(
