@@ -19,30 +19,24 @@ object SignupRoute extends Http4sDsl[IO] {
     case req @ POST -> Root / "signup" => {
       req
         .as[User]
-        .map { user =>
+        .flatMap { user =>
           Store
-            .signup(user)
-            .fold(
-              errors => {
-                val errs =
-                  errors.foldLeft(InputError.empty) { (accum, elt) =>
-                    elt match {
-                      case Store.EmailAlreadyExists(email) =>
-                        accum |+| InputError("email", "This email is already taken")
-                      case Store.NameAlreadyExists(name) =>
-                        accum |+| InputError("name", "This name is already taken")
-                    }
+            .signup(user) match {
+            case Left(errors) => {
+              val errs =
+                errors.foldLeft(InputError.empty) { (accum, elt) =>
+                  elt match {
+                    case Store.EmailAlreadyExists(email) =>
+                      accum |+| InputError("email", "This email is already taken")
+                    case Store.NameAlreadyExists(name) =>
+                      accum |+| InputError("name", "This name is already taken")
                   }
-                FormErrors(errs).asLeft
-              },
-              session => {
-                Authenticated(user.name, session).asRight
-              }
-            )
-        }
-        .flatMap {
-          case Left(error)          => BadRequest(error.asJson)
-          case Right(authenticated) => Ok(authenticated.asJson)
+                }
+              BadRequest(FormErrors(errs).asJson)
+            }
+            case Right(session) =>
+              Ok(Authenticated(user.name, session).asJson)
+          }
         }
     }
   }

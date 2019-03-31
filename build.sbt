@@ -37,13 +37,6 @@ lazy val server = project.
       Seq(code, sourceMap, dependencies)
     }.taskValue,
 
-    initialCommands in console := """
-      |doodlebot.DoodleBot.server
-    """.trim.stripMargin,
-
-    cleanupCommands in console := """
-      |doodlebot.DoodleBot.server.close()
-    """.trim.stripMargin
   )
 
 
