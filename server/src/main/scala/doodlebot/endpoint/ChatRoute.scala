@@ -5,8 +5,10 @@ import java.util.UUID
 
 import cats.data.{Kleisli, OptionT}
 import cats.effect.IO
+import cats.implicits._
 import doodlebot.action.Store
 import doodlebot.models.{Message, Name, Session}
+import io.circe.Json
 import io.circe.syntax._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
@@ -58,14 +60,29 @@ object ChatRoute extends Http4sDsl[IO] {
         })
     )
 
-  //TODOO: This is not secure!!
   private val unauthedRoute = AuthedService[AuthedUser, IO] {
-    case POST -> Root / "message" :? NameParam(name) +& MessageParam(message) as user => {
-      val msg = Message(name, message)
-      Ok(Store.message(msg))
+    case authedRequest @ POST -> Root / "message" as user => {
+      authedRequest.req.as[Json].flatMap { json =>
+        json.hcursor.downField("message").as[String] match {
+          case Left(err) => BadRequest(err.toString)
+          case Right(message) => Ok(Store.message(Message(user.name, message)))
+        }
+      }
     }
-    case POST -> Root / "poll" :? OffsetParam(offset) as user => {
-      Ok(Store.poll(offset).asJson)
+    case authedRequest @ POST -> Root / "poll" as user => {
+      authedRequest.req.as[Json].flatMap { json =>
+        json.hcursor.downField("offset").as[String].leftMap(failure => failure.toString).flatMap(strOffset => {
+          try {
+            Right(strOffset.toInt)
+          }
+          catch {
+            case e: NumberFormatException => Left("offset not a number")
+          }
+        }) match {
+          case Left(errMsg) => BadRequest(errMsg)
+          case Right(offset) => Ok(Store.poll(offset).asJson)
+        }
+      }
     }
   }
 
