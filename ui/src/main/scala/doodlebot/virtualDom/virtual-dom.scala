@@ -19,7 +19,8 @@ trait H extends js.Object {
 }
 
 @js.native
-object VirtualDom extends js.GlobalScope {
+@js.annotation.JSGlobalScope
+object VirtualDom extends js.Any {
   val h: H = js.native
   def createElement(vtree: VTree): dom.Element = js.native
   def diff(a: VTree, b: VTree): js.Array[VPatch] = js.native

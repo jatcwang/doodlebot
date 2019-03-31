@@ -1,11 +1,10 @@
 package doodlebot
 
-import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import org.scalajs.dom
 import doodlebot.virtualDom._
 
-object DoodleBot extends js.JSApp {
+object DoodleBot {
   import doodlebot.model._
   import doodlebot.message._
 
@@ -13,7 +12,7 @@ object DoodleBot extends js.JSApp {
   var current: VTree = null
   var rendered: dom.Element = null
 
-  def main(): Unit = {
+  def main(args: Array[String]): Unit = {
     current = Circuit.render(model)
     rendered = VirtualDom.createElement(current)
     val root = dom.document.getElementById("app")

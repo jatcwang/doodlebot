@@ -17,8 +17,8 @@ object StaticRoute extends Http4sDsl[IO] {
       IO {
         Response[IO](
           Ok,
-          body    = readInputStream(IO(resourceLoader.getResourceAsStream("index.html")), chunkSize = CHUNK_SIZE),
-          headers = Headers(Header("Content-Type", "application/javascript"))
+          body    = readInputStream(IO(resourceLoader.getResourceAsStream("/index.html")), chunkSize = CHUNK_SIZE),
+          headers = Headers(Header("Content-Type", "text/html"))
         )
       }
     }
@@ -26,11 +26,15 @@ object StaticRoute extends Http4sDsl[IO] {
       IO {
         val resourcePath = rest.toList.mkString("/", "/", "")
         println(s"Loading resource $resourcePath")
-        Response[IO](
-          Ok,
-          body    = readInputStream(IO(resourceLoader.getResourceAsStream(resourcePath)), chunkSize = CHUNK_SIZE),
-          headers = Headers(Header("Content-Type", "application/javascript"))
-        )
+        Option(resourceLoader.getResourceAsStream(resourcePath)) match {
+          case Some(inputStream) =>
+            Response[IO](
+              Ok,
+              body    = readInputStream(IO(inputStream), chunkSize = CHUNK_SIZE),
+              headers = Headers(Header("Content-Type", "application/javascript"))
+            )
+          case None => Response[IO](NotFound)
+        }
       }
     }
   }

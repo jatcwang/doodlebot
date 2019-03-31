@@ -30,14 +30,12 @@ lazy val server = project.
 
     ),
 
-    //TODOO:
-    /* resourceGenerators in Compile += Def.task { */
-    /*   val code = (fastOptJS in Compile in ui).value.data */
-    /*   val sourceMap = code.getParentFile / (code.getName + ".map") */
-    /*   val launcher = (scalaJSUseMainModuleInitializer in Compile in ui).value.data */
-    /*   val dependencies = (packageJSDependencies in Compile in ui).value */
-    /*   Seq(code, sourceMap, launcher, dependencies) */
-    /* }.taskValue, */
+    resourceGenerators in Compile += Def.task {
+      val code = (ui / Compile / fastOptJS).value.data
+      val sourceMap = code.getParentFile / (code.getName + ".map")
+      val dependencies = (ui / Compile / packageJSDependencies).value
+      Seq(code, sourceMap, dependencies)
+    }.taskValue,
 
     initialCommands in console := """
       |doodlebot.DoodleBot.server
