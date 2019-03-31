@@ -69,6 +69,6 @@ object ChatRoute extends Http4sDsl[IO] {
     }
   }
 
-  val route = AuthMiddleware(authenticateUser).apply(unauthedRoute)
+  val route = AuthMiddleware.withFallThrough(authenticateUser).apply(unauthedRoute)
 
 }

@@ -1,16 +1,20 @@
 package doodlebot
 
 import doodlebot.message.{Message => Msg}
-import scala.scalajs.js
 import org.scalajs.dom
-import org.scalajs.jquery
+import org.scalajs.dom.experimental.Fetch.fetch
+import org.scalajs.dom.experimental.{HttpMethod, RequestInit, Response}
+
+import scala.scalajs.js
+import js.JSConverters._
+import scala.scalajs.js.{Dictionary, UndefOr, |}
 import scala.scalajs.js.JSON
 
 sealed abstract class Effect extends Product with Serializable
 object Effect {
   final case object NoEffect extends Effect
   final case class Message(message: Msg) extends Effect
-  final case class Request(
+  final case class PostRequest(
     path: String,
     payload: js.Dictionary[String],
     success: js.Dictionary[js.Any] => Msg,
@@ -30,7 +34,7 @@ object Effect {
     failure: Map[String, List[String]] => Msg,
     headers: List[(String, String)] = List.empty
   ) =
-    Request(path, payload, success, failure, headers)
+    PostRequest(path, payload, success, failure, headers)
   def tick(message: Msg): Effect =
     Tick(message)
 
@@ -42,11 +46,11 @@ object Effect {
       case Message(message) =>
         DoodleBot.loop(message)
 
-      case Request(path, payload, success, failure, hdrs) =>
+      case PostRequest(path, payload, success, failure, hdrs) =>
         dom.console.log("Sending", payload, " to ", path, " with headers", hdrs.toString)
 
-        val callbackFailure = (data: js.Dictionary[js.Any]) => {
-          dom.console.log("Ajax request failed with", data)
+        val callbackFailure: Any => Unit | js.Thenable[Unit] = (data: Any) => {
+          dom.console.log("Ajax request failed with", data.asInstanceOf[js.Any])
 
           val raw = data.asInstanceOf[js.Dictionary[js.Dictionary[js.Dictionary[js.Array[String]]]]]
           val converted = raw("errors")("messages").toMap.mapValues(_.toList)
@@ -54,7 +58,7 @@ object Effect {
           DoodleBot.loop(failure(converted))
         }
 
-        val callbackSuccess = (data: js.Dictionary[js.Any]) => {
+        val callbackSuccess: Dictionary[js.Any] => Unit | js.Thenable[Unit] = (data: js.Dictionary[js.Any]) => {
           dom.console.log("Ajax request succeeded with", data)
           DoodleBot.loop(success(data))
         }
@@ -62,20 +66,15 @@ object Effect {
         val theHeaders: js.Dictionary[String] = js.Dictionary()
         hdrs.foreach { hdr => theHeaders += hdr }
 
-        val settings: jquery.JQueryAjaxSettings =
-          js.Dynamic.literal (
-            headers = theHeaders,
-            method = "POST",
-            url = path,
-            data = payload,
-            dataType = "json",
-            success = (data: js.Any, textStatus: String, jqXHR: jquery.JQueryXHR) =>
-              callbackSuccess(data.asInstanceOf[js.Dictionary[js.Any]]) ,
-            error = (jqXHR: jquery.JQueryXHR, textStatus: String, errorThrow: String) =>
-              callbackFailure(JSON.parse(jqXHR.responseText).asInstanceOf[js.Dictionary[js.Any]])
-          ).asInstanceOf[jquery.JQueryAjaxSettings]
-
-        jquery.jQuery.ajax(settings)
+        dom.console.log(payload)
+        fetch(path, js.Dynamic.literal(
+          method = HttpMethod.POST,
+          headers = (hdrs :+ ("Content-Type" -> "application/json")).toMap.toJSDictionary,
+          body = JSON.stringify(payload),
+        ).asInstanceOf[RequestInit])
+          .`then`[js.Promise[js.Any]]((resp: Response) => resp.json())
+          .asInstanceOf[js.Promise[js.Dictionary[js.Any]]]
+          .`then`[Unit](callbackSuccess, UndefOr.any2undefOrA(callbackFailure))
 
       case Tick(message) =>
         dom.window.setInterval(() => DoodleBot.loop(message), 1000)

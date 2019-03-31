@@ -18,6 +18,7 @@ object DoodleBot extends StreamApp[IO] with Http4sDsl[IO] {
 
     BlazeBuilder[IO]
       .bindHttp(8080, "localhost")
+      .mountService(ChatRoute.route)
       .mountService(LoginRoute.route)
       .mountService(SignupRoute.route)
       .mountService(StaticRoute.route)
