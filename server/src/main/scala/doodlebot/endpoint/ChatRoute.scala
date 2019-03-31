@@ -65,7 +65,7 @@ object ChatRoute extends Http4sDsl[IO] {
       authedRequest.req.as[Json].flatMap { json =>
         json.hcursor.downField("message").as[String] match {
           case Left(err) => BadRequest(err.toString)
-          case Right(message) => Ok(Store.message(Message(user.name, message)))
+          case Right(message) => Ok(Store.message(Message(user.name, message)).asJson)
         }
       }
     }

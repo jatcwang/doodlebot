@@ -92,9 +92,10 @@ object Store {
       }
     }
 
-  def message(message: Message): Unit =
+  def message(message: Message): Message =
     Store.synchronized {
       messages += message
+      message
     }
 
   def authenticated(name: Name, session: Session): Boolean =

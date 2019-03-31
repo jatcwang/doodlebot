@@ -66,7 +66,6 @@ object Effect {
         val theHeaders: js.Dictionary[String] = js.Dictionary()
         hdrs.foreach { hdr => theHeaders += hdr }
 
-        dom.console.log(payload)
         fetch(path, js.Dynamic.literal(
           method = HttpMethod.POST,
           headers = (hdrs :+ ("Content-Type" -> "application/json")).toMap.toJSDictionary,

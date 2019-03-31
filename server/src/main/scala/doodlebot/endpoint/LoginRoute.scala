@@ -2,7 +2,6 @@ package doodlebot
 package endpoint
 
 import cats.effect.IO
-import cats.implicits._
 import doodlebot.action.Store
 import doodlebot.models._
 import doodlebot.validation.InputError
@@ -16,27 +15,22 @@ object LoginRoute extends Http4sDsl[IO] {
   object PasswordParam extends QueryParamDecoderMatcher[String]("password")
 
   val route = HttpService[IO] {
-    case POST -> Root / "login" :? NameParam(nameStr) +& PasswordParam(passwordStr) => {
-      IO {
-        val name = Name(nameStr)
-        val login = Login(name, Password(passwordStr))
-        Store
-          .login(login) match {
+    case req @ POST -> Root / "login" => {
+      req.as[Login].flatMap { loginInfo =>
+        Store.login(loginInfo) match {
           case Left(error) => {
-              FormErrors(error match {
-                case Store.NameDoesNotExist(name) =>
-                  InputError("name", "Nobody has signed up with this name")
-                case Store.PasswordIncorrect =>
-                  InputError("password", "Your password is incorrect")
-              }).asLeft
-            }
+            val errors = FormErrors(error match {
+              case Store.NameDoesNotExist(name) =>
+                InputError("name", "Nobody has signed up with this name")
+              case Store.PasswordIncorrect =>
+                InputError("password", "Your password is incorrect")
+            })
+            BadRequest(errors.asJson)
+          }
           case Right(session) => {
-              Authenticated(name, session).asRight
-            }
+            Ok(Authenticated(loginInfo.name, session).asJson)
+          }
         }
-      }.flatMap {
-        case Left(error)          => BadRequest(error.asJson)
-        case Right(authenticated) => Ok(authenticated.asJson)
       }
     }
   }

@@ -20,8 +20,6 @@ object SignupRoute extends Http4sDsl[IO] {
       req
         .as[User]
         .map { user =>
-
-
           Store
             .signup(user)
             .fold(

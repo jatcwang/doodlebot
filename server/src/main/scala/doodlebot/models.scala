@@ -2,10 +2,13 @@ package doodlebot
 
 import java.util.UUID
 
-import io.circe.syntax._
 import cats.data.ValidatedNel
+import cats.effect.IO
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json, ObjectEncoder}
-import io.circe.generic.semiauto.{deriveEncoder, deriveDecoder}
+import org.http4s.EntityDecoder
+import org.http4s.circe._
 
 object models {
   import doodlebot.syntax.validation._
@@ -33,9 +36,17 @@ object models {
   // Messages from the client
   final case class Login(name: Name, password: Password)
 
+  object Login {
+    implicit val entityDecoder: EntityDecoder[IO, Login] = {
+      implicit val decoder: Decoder[Login] = deriveDecoder[Login]
+      jsonOf[IO, Login]
+    }
+  }
+
   // Wrappers
   final case class Name(get: String) extends AnyVal
   object Name {
+    //TODOO: this validation is broken
     def validate(name: String): ValidatedNel[String, Name] =
       name.validate(lengthAtLeast(6) and onlyLettersOrDigits).map(n => Name(n))
 
