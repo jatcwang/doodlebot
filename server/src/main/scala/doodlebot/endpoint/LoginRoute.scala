@@ -11,10 +11,8 @@ import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 
 object LoginRoute extends Http4sDsl[IO] {
-  object NameParam extends QueryParamDecoderMatcher[String]("password")
-  object PasswordParam extends QueryParamDecoderMatcher[String]("password")
 
-  val route = HttpService[IO] {
+  val route: HttpService[IO] = HttpService[IO] {
     case req @ POST -> Root / "login" => {
       req.as[Login].flatMap { loginInfo =>
         Store.login(loginInfo) match {

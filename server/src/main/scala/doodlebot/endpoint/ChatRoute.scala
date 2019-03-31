@@ -14,15 +14,10 @@ import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.AuthMiddleware
 import org.http4s.util.CaseInsensitiveString
-import org.http4s.{AuthedService, Request}
+import org.http4s.{AuthedService, HttpService, Request, Response}
 import sun.misc.BASE64Decoder
 
 object ChatRoute extends Http4sDsl[IO] {
-
-  private object NameParam extends QueryParamDecoderMatcher[String]("name")
-  private object MessageParam extends QueryParamDecoderMatcher[String]("message")
-
-  private object OffsetParam extends QueryParamDecoderMatcher[Int]("offset")
 
   final case class AuthedUser(name: String)
 
@@ -86,6 +81,6 @@ object ChatRoute extends Http4sDsl[IO] {
     }
   }
 
-  val route = AuthMiddleware.withFallThrough(authenticateUser).apply(unauthedRoute)
+  val route: HttpService[IO] = AuthMiddleware.withFallThrough(authenticateUser).apply(unauthedRoute)
 
 }

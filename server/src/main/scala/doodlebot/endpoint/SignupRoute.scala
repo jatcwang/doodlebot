@@ -15,7 +15,7 @@ object SignupRoute extends Http4sDsl[IO] {
 
   private implicit val userEntityDecoder: EntityDecoder[IO, User] = jsonOf[IO, User]
 
-  val route = HttpService[IO] {
+  val route: HttpService[IO] = HttpService[IO] {
     case req @ POST -> Root / "signup" => {
       req
         .as[User]

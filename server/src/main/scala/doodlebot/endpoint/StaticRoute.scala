@@ -12,7 +12,7 @@ object StaticRoute extends Http4sDsl[IO] {
 
   private val CHUNK_SIZE = 1024
 
-  val route = HttpService[IO] {
+  val route: HttpService[IO] = HttpService[IO] {
     case GET -> Root / "index" => {
       IO {
         Response[IO](
